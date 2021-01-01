@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en" class="notranslate" translate="no">
+<head>
+    <meta name="google" content="notranslate">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" 
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src = "https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" 
+        integrity = "sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" 
+        crossorigin = "anonymous">
+    </script>
+
+    <style>
+        html, body {
+            min-height: 100%;
+            background-color:#1d1d1d; 
+        }
+
+        .card {
+            background: #4b4b4b;
+            color: white;
+
+            margin: 0 auto;
+            float: none;
+            margin-bottom: 10px;
+        }
+
+        .card-header{
+            text-align: center;
+            font-size: 2em;
+            color: white;
+        }
+
+        .text-primary{
+            color: white !important;
+        }
+
+        .form-group{
+            margin-right: 7px;
+            margin-left: 7px;
+        }
+
+        #quantity{
+            text-align: center;
+            width: 5em;
+            height: 1.7em;
+            margin-top: -1px;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+
+        .result_div {
+            text-align: center;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            font-size: 1.7em;
+            color: white;
+        }
+
+        .alert-success{
+            background-color:#4486ff;
+            color:#fff;
+        }
+
+        .alert-error{
+            background-color:#ff3b5c;
+            color:#fff;
+        }
+    </style>
+
+    <title>Exchange</title>
+</head>
+<body>
+    <br><br><br>
+    <div class = "container">
+
+        <div class="card border-primary mb-3" style="max-width: 19rem;">
+
+            <div class="card-header">Exchange</div>
+            <div class="card-body text-primary">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <input type="number" id="quantity" name="quantity" value="1" min="1">
+                    </div>
+                    <div class="form-group">
+                        <select name="unit1" id="unit1">
+                        </select>
+                    </div>
+                    ->
+                    <div class="form-group">
+                        <select name="unit2" id="unit2">
+                        </select>
+                    </div>
+                </div>
+                <div id="result_div" class="result_div"></div>
+                <div id="message_div"></div>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+
+
+<!-- ui js -->
+<script>
+    class UI {
+
+        constructor(defaultUnit1, defaultUnit2){
+            this.defaultUnit1 = defaultUnit1;
+            this.defaultUnit2 = defaultUnit2;
+        }
+
+        addUnits(units){
+            const unit1 = document.getElementById("unit1");
+            const unit2 = document.getElementById("unit2");
+
+            for (var unit in units) {
+                if(units[unit] === this.defaultUnit1){
+                    unit1.innerHTML += `
+                        <option selected="selected" value="${units[unit]}">${units[unit]} </option>
+                    `;
+                }
+                else{
+                    unit1.innerHTML += `
+                        <option value="${units[unit]}">${units[unit]}</option>
+                    `;
+                }
+
+                if(units[unit] === this.defaultUnit2){
+                    unit2.innerHTML += `
+                        <option selected="selected" value="${units[unit]}">${units[unit]} </option>
+                    `;
+                }
+                else{
+                    unit2.innerHTML += `
+                        <option value="${units[unit]}">${units[unit]}</option>
+                    `;
+                }
+            }
+
+        }
+
+        addValue(value){
+            const result_div = document.getElementById("result_div");
+            result_div.innerHTML = `
+                ${value}
+            `;
+        }
+
+        displayToastMessages(type, delay, message){
+            
+            const alert = document.createElement("div");
+
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+
+
+            const message_div = document.getElementById("message_div");
+            message_div.appendChild(alert);
+
+            //1 second delay
+            window.setTimeout(function(){
+                alert.remove();
+            },delay*1000);
+
+        }
+
+    }
+</script>
+
+
+<!-- exchange js -->
+<script>
+    
+    class Exchange{
+
+        constructor(apiKey){
+            this.url = "https://v6.exchangerate-api.com/v6/" + apiKey + "/latest/";
+        }
+
+        async getExchangeUnits(){
+            const response = await fetch(this.url + "USD");
+            const data = await response.json();
+            
+            const units = data.conversion_rates;
+
+            return Object.keys(units);
+        }
+
+        async getExchangeData(quantity, unit1, unit2){
+            const response = await fetch(this.url + unit1);
+            const data = await response.json();
+            let result = data.conversion_rates[unit2] * quantity;
+            result = result.toLocaleString('en-US', {maximumFractionDigits:2});
+            return result + " " + unit2;
+        }
+
+    }
+
+</script>
+
+
+<!-- app js -->
+<script>
+    // get html elements
+    const unit1 = document.getElementById("unit1");
+    const unit2 = document.getElementById("unit2");
+    const quantity = document.getElementById("quantity");
+
+    // eventListeners
+    document.addEventListener("DOMContentLoaded", initUi);
+    unit1.addEventListener("change", exchangeEvent);
+    unit2.addEventListener("change", exchangeEvent);
+    quantity.addEventListener("input", exchangeEvent);
+
+    // init classes
+    exchange = new Exchange("fc2d33590e9204a19352b786");  // please don't steal my api key
+    ui = new UI("USD", "TRY");
+
+
+
+    function initUi(){
+        exchange.getExchangeUnits()
+        .then((result) => {
+            ui.addUnits(result);
+            ui.displayToastMessages("success", 2, "Exchange units set from api");
+
+            exchange.getExchangeData(quantity.value, unit1.value, unit2.value)
+            .then((result) => {
+                console.log(result);
+                ui.addValue(result);
+            }).catch((err) => {
+                console.log(err);
+            });
+
+        }).catch((err) => {
+            ui.displayToastMessages("error", 2, "Can not connected to api");
+        });
+
+    }
+
+
+    function exchangeEvent(){
+        exchange.getExchangeData(quantity.value, unit1.value, unit2.value)
+        .then((result) => {
+            console.log(result);
+            ui.addValue(result);
+            ui.displayToastMessages("success", 1, "Success");
+        }).catch((err) => {
+            ui.displayToastMessages("error", 2, "Error");
+        });
+    }
+</script>
+
+</html>
