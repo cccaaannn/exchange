@@ -1,7 +1,14 @@
 # exchange
-simple exchange rates ui
+### simple exchange rates ui
 ---
 
-api from
+# https://cccaaannn.github.io/exchange/
 
-[.exchangerate-api](https://app.exchangerate-api.com/)
+
+### api from
+
+[exchangerate-api](https://app.exchangerate-api.com)
+
+
+
+
