@@ -4,18 +4,21 @@ const unit2 = document.getElementById("unit2");
 const quantity = document.getElementById("quantity");
 
 // eventListeners
-document.addEventListener("DOMContentLoaded", initUi);
+document.addEventListener("DOMContentLoaded", init);
 unit1.addEventListener("change", exchangeEvent);
 unit2.addEventListener("change", exchangeEvent);
 quantity.addEventListener("input", exchangeEvent);
 
 // init classes
-exchange = new Exchange("fc2d33590e9204a19352b786");  // please don't steal my api key
+exchange = new Exchange("fc2d33590e9204a19352b786");  // please don't steal my api key it is free
 ui = new UI("USD", "TRY");
 
 
 
-function initUi(){
+function init(){
+    // service worker for pwa
+    registerServiceWorker();
+
     exchange.getExchangeUnits()
     .then((result) => {
         ui.addUnits(result);
@@ -30,6 +33,7 @@ function initUi(){
         });
 
     }).catch((err) => {
+        console.log(err);
         ui.displayToastMessages("error", 2, "Can not connected to api");
     });
 
@@ -45,5 +49,17 @@ function exchangeEvent(){
     }).catch((err) => {
         ui.displayToastMessages("error", 2, "Error");
     });
+}
+
+
+function registerServiceWorker(){
+    if("serviceWorker" in navigator){
+        navigator.serviceWorker.register("sw.js").then(registration => {
+
+        }).catch(error => {
+            console.log("service worker can not registered");
+            console.log(error);
+        })
+    }
 }
 
